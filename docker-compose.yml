@@ -1,0 +1,51 @@
+# Inicia a declaração de todos os containers (serviços) que farão parte desta aplicação.
+services: 
+  
+  # Nome do serviço. É assim que outros containers na mesma rede poderão 
+  # se comunicar com esta API (ex: http://api:3000).
+  api: 
+    
+    # Bloco de configurações sobre como construir (buildar) a imagem do Docker.
+    build: 
+      # Define o "contexto" do build, ou seja, onde o Docker deve procurar os arquivos.
+      # O "." (ponto) significa a pasta atual (onde este arquivo docker-compose.yml está).
+      context: . 
+      
+      # Lembra do "Multi-stage Build" no seu Dockerfile? 
+      # Isso diz ao Docker para parar a construção na etapa "dev" (FROM base AS dev).
+      # Ele ignora qualquer etapa de produção que venha depois disso no Dockerfile.
+      target: dev 
+    
+    # Dá um nome fixo e amigável ao container (neste caso, "jurisengine_api").
+    # Se você não colocar isso, o Docker inventa um nome juntando o nome da pasta + serviço (ex: meuprojeto-api-1).
+    container_name: jurisengine_api 
+    
+    # Mapeamento de portas (Redirecionamento).
+    ports: 
+      # Sintaxe: "PORTA_DA_SUA_MÁQUINA:PORTA_DO_CONTAINER"
+      # Tudo que bater no "localhost:3000" do seu computador será enviado para a porta 3000 dentro do container.
+      - "${PORT}:${PORT}" 
+    
+    # Volumes criam um "espelho" (Bind Mount) entre pastas/arquivos da sua máquina física e o container.
+    # É isso que permite o "Live Reload" (Hot Reload) funcionar sem precisar reconstruir o container a cada mudança.
+    volumes: 
+      # Espelha a pasta "src" local para dentro de "/app/src" no container.
+      # Se você salvar um arquivo no VSCode, o container enxerga a mudança instantaneamente.
+      - ./src:/app/src 
+      
+      # Espelha o package.json. Útil se você adicionar um script novo, o container já reconhece.
+      - ./package.json:/app/package.json 
+      
+      # Espelha as configurações do TypeScript.
+      - ./tsconfig.json:/app/tsconfig.json 
+      
+      # Nota: Repare que a pasta "node_modules" não está mapeada aqui. 
+      # Isso é excelente, pois garante que o container use a "node_modules" instalada 
+      # no Linux Alpine (dentro do Dockerfile) e não a da sua máquina física, evitando conflitos de sistema operacional.
+    
+    # Política de reinício do container em caso de falha ou quando o computador reiniciar.
+    # "unless-stopped" significa: "Mantenha o container rodando e reinicie se ele crachar, 
+    # a não ser que eu digite 'docker stop' explicitamente".
+    restart: unless-stopped
+    environment:
+      - PORT=${PORT}
