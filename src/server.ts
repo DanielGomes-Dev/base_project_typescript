@@ -1,7 +1,11 @@
-import app from "./app";
+// src/server.ts
+import dotenv from 'dotenv';
+import app from './app.js';
 
-const PORT = 3000;
+dotenv.config();
 
-app.listen(PORT, ()=>{
-    console.log(`[Server] Rodando na porta ${PORT}`)
-})
+const PORT = process.env.PORT || 3001;
+
+app.listen(PORT, () => {
+  console.log(`[Server] Rodando na porta ${PORT}`);
+});
