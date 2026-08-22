@@ -47,5 +47,9 @@ services:
     # "unless-stopped" significa: "Mantenha o container rodando e reinicie se ele crachar, 
     # a não ser que eu digite 'docker stop' explicitamente".
     restart: unless-stopped
+    # Define as variáveis de ambiente que estarão acessíveis dentro do container (via process.env).
     environment:
+      # Passa a variável de ambiente "PORT" para o container.
+      # A sintaxe ${PORT} instrui o Docker Compose a ler o valor de uma variável "PORT" 
+      # declarada no seu arquivo ".env" local (ou no próprio terminal/sistema) e injetá-la no container.
       - PORT=${PORT}
