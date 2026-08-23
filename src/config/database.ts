@@ -4,7 +4,9 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/juris_db';
+console.log("URL Mongo Connected: ", MONGODB_URI);
 
 mongoose.connect(MONGODB_URI).catch((err: Error) => {
   console.error('[mongoose] Falha ao conectar:', err.message);

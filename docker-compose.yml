@@ -53,6 +53,7 @@ services:
       # A sintaxe ${PORT} instrui o Docker Compose a ler o valor de uma variável "PORT" 
       # declarada no seu arquivo ".env" local (ou no próprio terminal/sistema) e injetá-la no container.
       - PORT=${PORT}
+      - MONGODB_URI=${MONGODB_URI}
 
   # Define o serviço do banco de dados (acessível por outros containers na rede como "mongo")
   mongo: 
