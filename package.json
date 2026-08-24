@@ -5,8 +5,10 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "tsx watch src/server.ts",
-    "lint": "eslint src/**/*.ts"
+    "dev": "tsx --watch src/server.ts",
+    "db:seed": "tsx src/database/seed.ts",
+    "lint": "eslint src/**/*.ts",
+    "worker": "tsx watch src/workers/lawsuitSync.worker.ts"
   },
   "keywords": [],
   "author": "",
@@ -24,7 +26,10 @@
     "typescript-eslint": "^8.67.0"
   },
   "dependencies": {
+    "bullmq": "^6.2.0",
     "dotenv": "^17.4.2",
-    "express": "^5.2.1"
+    "express": "^5.2.1",
+    "ioredis": "^6.0.0",
+    "mongoose": "^9.9.3"
   }
 }
