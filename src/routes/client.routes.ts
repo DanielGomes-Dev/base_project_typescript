@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { asyncHandler } from "../middlewares/asyncHandler";
 import { createClient, getClientById, listClients } from "../controllers/client.controller";
+import { batchImportLawsuits } from "../controllers/lawsuit.controller";
 
 
 const router = Router();
