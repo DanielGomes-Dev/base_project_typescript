@@ -1,4 +1,5 @@
 import { Schema, model } from "mongoose";
+import { movementSchema } from "./movement.schema";
 
 const lawsuitSchema = new Schema({
     cnjNumber: {
@@ -18,6 +19,11 @@ const lawsuitSchema = new Schema({
         ref: 'Client',
         required: true,
     },
+
+    movements: {
+        type: [movementSchema],
+        default: [],
+    }
     },
 
     {
