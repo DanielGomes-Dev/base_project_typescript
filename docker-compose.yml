@@ -98,6 +98,17 @@ services:
     # Mantém o banco de dados rodando e o reinicia automaticamente se o Docker/computador reiniciar.
     restart: unless-stopped 
 
+
+  redis:
+    image: redis:7-alpine
+    container_name: jurisengine_redis
+    restart: unless-stopped
+    ports:
+      - 6379:6379
+    volumes:
+      - redis_data:/data
+
+
 # ---------- Declaração Global de Volumes ----------
 
 # Para que o Docker saiba que 'mongo_data' (usado lá em cima) não é uma pasta do seu projeto, 
@@ -106,3 +117,4 @@ volumes:
   # O Docker vai criar um espaço isolado no HD da sua máquina (geralmente em /var/lib/docker/volumes)
   # para guardar os dados do Mongo de forma extremamente rápida e segura.
   mongo_data:
+  redis_data:
