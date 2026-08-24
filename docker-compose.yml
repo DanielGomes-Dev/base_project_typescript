@@ -109,6 +109,29 @@ services:
       - redis_data:/data
 
 
+  worker:
+    build:
+      context: .
+      target: dev
+    container_name: jurisengine_worker
+    command: npm run worker
+    restart: unless-stopped
+    depends_on:
+      - mongo
+      - redis
+    env_file:
+      - .env
+    environment:
+      - REDIS_HOST=${REDIS_HOST}
+      - LAWSUIT_SYNC_CONCURRENCY=${LAWSUIT_SYNC_CONCURRENCY}
+      - LAWSUIT_SYNC_CONCURRENCY=${LAWSUIT_SYNC_CONCURRENCY}
+      - MONGODB_URI=${MONGODB_URI}
+
+    volumes:
+      - .:/app
+      - /app/node_modules
+
+
 # ---------- Declaração Global de Volumes ----------
 
 # Para que o Docker saiba que 'mongo_data' (usado lá em cima) não é uma pasta do seu projeto, 
