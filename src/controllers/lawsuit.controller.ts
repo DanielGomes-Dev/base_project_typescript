@@ -62,14 +62,18 @@ export async function batchImportLawsuits(req: Request<unknown, unknown, BatchIm
         // const upsertResult = await Lawsuit.findOneAndUpdate(
         //     { cnjNumber },
         //     { $setOnInsert: { cnjNumber, clientId } },
-        //     { new: true, upsert: true, rawResult: true }
+        //     { new: true, //Decrecated
+        //          upsert: true, rawResult: true }
         // );
 
         // Faz o upsert e já pega o documento atualizado ou criado diretamente
         const lawsuit = await Lawsuit.findOneAndUpdate(
             { cnjNumber },
             { $setOnInsert: { cnjNumber, clientId } },
-            { new: true, upsert: true, returnDocument: 'after' } // Substitui rawResult por returnDocument para sumir com o Warning do Mongoose também
+            { 
+                returnDocument: 'after', 
+                upsert: true,  
+            } 
         );
 
         // Como o Mongoose agora garante que retorna o documento (ou criamos com upsert), 
@@ -149,3 +153,45 @@ export async function getLawsuitById(req: Request, res: Response){
 
     return res.status(200).json(lawsuit);
 }
+
+
+
+/*
+
+Esse trecho de código tenta encontrar um processo (`Lawsuit`) pelo número do CNJ e, caso ele não exista, cria um novo.
+
+Aqui está o que cada parte faz, linha por linha:
+
+### 1. O Filtro de busca (`{ cnjNumber }`)
+
+* **O que faz:** É a condição de busca do MongoDB (equivalente a `{ cnjNumber: cnjNumber }`). O Mongoose vai procurar no banco de dados se já existe um documento com esse número de CNJ específico.
+
+### 2. A Atualização / Inserção (`{ $setOnInsert: { cnjNumber, clientId } }`)
+
+* **O que faz:** O operador `$setOnInsert` define valores que **só serão aplicados se o documento precisar ser criado do zero** (ou seja, se acontecer um *upsert*).
+* Se o documento **já existir**, essa linha é totalmente ignorada e nada é alterado nele. Isso é excelente para garantir que campos de criação (como quem é o `clientId` original ou o próprio `cnjNumber`) não sejam sobrescritos acidentalmente em buscas futuras.
+
+### 3. As Opções (`{ returnDocument, rawResult, upsert }`)
+
+* **`returnDocument: 'after'`**: Diz ao Mongoose para retornar o documento **já com o estado atualizado** (ou recém-criado) após a execução da operação, em vez de retornar a versão antiga.
+* **`rawResult: true`**: Pede para o Mongoose ignorar a formatação padrão dele e te entregar o **objeto de resposta cru (bruto)** que vem direto do driver do MongoDB (contendo metadados como `ok: 1`, `lastErrorObject`, etc.).
+* **`upsert: true`**: A sigla para *Update + Insert*. Se a busca pelo `cnjNumber` não encontrar nenhum registro no banco, o MongoDB cria um documento novo combinando o filtro (`cnjNumber`) com os dados do `$setOnInsert`.
+
+---
+
+### 💡 Uma observação importante sobre o `rawResult: true`:
+
+Quando você usa `rawResult: true` junto com `returnDocument: 'after'`, a variável `lawsuit` **não vai ser direto o documento do processo**. Ela será um objeto de resposta do driver do MongoDB, que vem mais ou menos assim:
+
+```javascript
+{
+  value: { _id: "...", cnjNumber: "...", clientId: "...", ... }, // O documento está aqui dentro!
+  lastErrorObject: { ... },
+  ok: 1
+}
+
+```
+
+Se você precisar acessar os dados do processo logo em seguida, lembre-se de que o documento real estará dentro de `lawsuit.value` (ou você pode remover o `rawResult: true` se preferir que a variável `lawsuit` retorne o documento diretamente).
+
+*/

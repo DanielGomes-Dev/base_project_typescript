@@ -3,7 +3,7 @@ import { Job, Worker } from 'bullmq';
 import dotenv from 'dotenv';
 import { LAWSUIT_SYNC_QUEUE, LawsuitSyncJobData } from '../queues/lawsuitSync.queue';
 import { fetchTribunalMovements } from './tribunalApi.simulator';
-import { Lawsuit } from '../models';
+import { DeadLetterJob, Lawsuit } from '../models';
 import { redisConnection } from '../config/redis';
 
 dotenv.config();
@@ -86,15 +86,32 @@ export const lawsuitSyncWorker = new Worker<LawsuitSyncJobData>(LAWSUIT_SYNC_QUE
   concurrency: WORKER_CONCURRENCY,
 });
 
-lawsuitSyncWorker.on('failed', (job, err) => {
-  if (!job) return;
-  console.error(
-    `[worker:lawsuit-sync] job=${job.id} falhou na tentativa ${job.attemptsMade}/${job.opts.attempts ?? 1}: ${err.message}`
-  );
+lawsuitSyncWorker.on('failed', async (job, err) => {
+    if (!job) return;
+    const attemptsMade = job.attemptsMade;
+    const maxAttempts = job.opts.attempts ?? 1;
+    console.error(`[worker:lawsuit-sync] job=${job.id} falhou na tentativa ${attemptsMade}/${maxAttempts}: ${err.message}`);
+    // Só vai para a DLQ quando TODAS as tentativas se esgotaram — falhas
+    // intermediárias são esperadas e tratadas pelo retry/backoff.
+    if (attemptsMade >= maxAttempts) {
+        try {
+            await DeadLetterJob.create({
+                queueName: LAWSUIT_SYNC_QUEUE,
+                jobId: String(job.id),
+                lawsuitId: job.data.lawsuitId,
+                payload: { ...job.data },
+                errorMessage: err.message,
+                attemptsMade,
+            });
+            console.error(`[worker:lawsuit-sync] job=${job.id} movido para a DLQ (dead_letter_jobs).`);
+        } catch (dlqError) {
+            console.error(`[worker:lawsuit-sync] FALHA CRÍTICA ao gravar DLQ do job=${job.id}:`, dlqError);
+        }
+    }
 });
 
 lawsuitSyncWorker.on('completed', (job) => {
-  console.log(`[worker:lawsuit-sync] job=${job.id} finalizado com sucesso.`);
+    console.log(`[worker:lawsuit-sync] job=${job.id} finalizado com sucesso.`);
 });
 
 console.log(`[worker:lawsuit-sync] Worker iniciado (concurrency=${WORKER_CONCURRENCY}). Aguardando jobs...`);
